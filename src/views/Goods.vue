@@ -3,14 +3,14 @@
     <div class="letfdiv">
       <ul class="content">
         <div @click="clickLeft(index)" :class="{letfOne:true,
-        selected:index==curselected}" v-for="(item,index) in list" :key="item.name">
+        selected:index==curselected}" v-for="(item,index) in goodslist" :key="item.name">
           <span>{{ item.name }}</span>
         </div>
       </ul>
     </div>
     <div class="rightdiv">
       <ul class="content">
-        <div :id="index" v-for="(item,index) in list" :key="item.id">
+        <div :id="index" v-for="(item,index) in goodslist" :key="item.id">
           <h5 class="rightType"> {{ item.name }}</h5>
           <div v-for="child in item.foods" :key="child.id" class="rightChild">
             <img :src="child.icon" class="childImg">
@@ -30,9 +30,9 @@
                 <label class="childInf5">{{child.oldPrice}}</label>
               </p>
               <div class="addRemove">
-                <button>-</button>
-                <span>1</span>
-                <button>+</button>
+                <button v-show="child.num>0" @click="clickDec(child.name)">-</button>
+                <span v-show="child.num>0">{{child.num}}</span>
+                <button @click="clickAdd(child.name)">+</button>
               </div>
             </div>
           </div>
@@ -49,25 +49,57 @@ import Bscroll from "better-scroll";
 export default {
   data() {
     return {
-      list: [],
       curselected: 0
     };
   },
   created() {
     getgoods().then(res => {
-      this.list = res.data.data;
+      this.$store.commit("iniGoodslist", res.data.data);
     });
   },
   mounted() {
     new Bscroll(document.querySelector(".letfdiv"), {
       click: true
     });
-    this.rightDiv = new Bscroll(document.querySelector(".rightdiv"));
+    this.rightDiv = new Bscroll(document.querySelector(".rightdiv"), {
+      probeType: 3
+    });
+    this.rightDiv.on("scroll", ({ y }) => {
+      let _y = Math.abs(y);
+      for (let divObj of this.getDivmath) {
+        if (_y >= divObj.min && _y < divObj.max) {
+          this.curselected = divObj.index;
+          return;
+        }
+      }
+    });
   },
   methods: {
     clickLeft(index) {
       this.curselected = index;
       this.rightDiv.scrollToElement(document.getElementById(index), 500);
+    },
+    clickDec(name) {
+       this.$store.commit('decNum',name)
+    },
+    clickAdd(name) {
+      this.$store.commit('addNum',name)
+    }
+  },
+  computed: {
+    getDivmath() {
+      let arr = [];
+      let total = 0;
+      for (let i = 0; i < this.goodslist.length; i++) {
+        let curDivh = document.getElementById(i).offsetHeight;
+        arr.push({ min: total, max: total + curDivh, index: i });
+        total += curDivh;
+      }
+      // console.log(arr)
+      return arr;
+    },
+    goodslist() {
+      return this.$store.state.goodslist;
     }
   }
 };

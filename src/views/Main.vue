@@ -36,15 +36,25 @@
       </Menu>
     </div>
     <router-view></router-view>
-    <div class="shopcar">
+    <transition name="slide-fade">
+      <div v-show="shopcarShow" class="shopcar-board">
+
+        <shopcar></shopcar>
+      </div>
+    </transition>
+    <div class="shopcar" @click="shopcarShow = !shopcarShow">
       <div class="carImg">
-        <img src="../assets/images/shopcar.png">
+        <img v-show="getPrice!==0" src="../assets/images/shopcar1.png">
+        <img v-show="getPrice==0" src="../assets/images/shopcar2.png">
       </div>
-      <div class="peisong">￥0|
-        <span>另需配送费￥4元</span>
+      <div class="peisong">￥{{getPrice}}|
+        <span>另需配送费￥{{data.deliveryPrice}}元</span>
       </div>
-      <div class="qisong">
-        20起送
+      <div v-show="getPrice<20" class="qisong">
+        <span>20起送</span>
+      </div>
+      <div v-show="getPrice>=20" class="qisonga">
+        <span>去结算</span>
       </div>
     </div>
   </div>
@@ -52,9 +62,13 @@
 
 <script>
 import { getseller } from "../api/apis.js";
+import { getgoods } from "../api/apis.js";
+import shopcar from "./Shopcar";
+
 export default {
   data() {
     return {
+      shopcarShow: false,
       data: {
         supports: [{ description: "" }]
       }
@@ -64,8 +78,26 @@ export default {
     getseller().then(res => {
       this.data = res.data.data;
     });
+    getgoods().then(res => {
+      this.$store.commit("iniGoodslist", res.data.data);
+    });
   },
-  methods: {}
+  methods: {},
+  computed: {
+    goodslist() {
+      return this.$store.state.goodslist;
+    },
+    getPrice() {
+      let total = 0;
+      for (let food of this.$store.getters.getshopcargoods) {
+        total += food.num * food.price;
+      }
+      return total;
+    }
+  },
+  components: {
+    shopcar
+  }
 };
 </script>
 
@@ -196,15 +228,43 @@ export default {
   .peisong {
     height: 100%;
     background-color: #131d27;
-    font-size: 16px;
+    font-size: 20px;
     span {
-      font-size: 14px;
+      font-size: 10px;
     }
   }
   .qisong {
     height: 100%;
     width: 120px;
-    background-color: #2a353a;
+    background-color: color1afa29;
+    font-weight: bolder;
   }
+  .qisonga {
+    height: 100%;
+    width: 120px;
+    background-color: #1afa29;
+    color: #131d27;
+    font-weight: bolder;
+  }
+}
+.shopcar-board {
+  position: fixed;
+  height: 200px;
+  width: 100%;
+  bottom: 60px;
+  background-color: #fff;
+  overflow: scroll;
+}
+
+.slide-fade-enter-active {
+  transition: all 0.4s ease;
+}
+.slide-fade-leave-active {
+  transition: all 0.4s ease;
+}
+.slide-fade-enter,
+.slide-fade-leave-to {
+  transform: translateY(200px);
+  opacity: 0;
 }
 </style>

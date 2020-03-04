@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 let req = axios.create({
-    // baseURL: 'http://localhost:3000',
-    baseURL: 'http://192.168.0.101:3000',
+    baseURL: 'http://localhost:3000',
+    // baseURL: 'http://192.168.0.101:3000',
     
     timeout: 10000
 })
